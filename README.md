@@ -8,7 +8,7 @@
 
 ```
 sim          INFO    RUN test_insufficient_fee: <tx sender=alice value=10 fee=0 data=[] datan=0>
-subcurrency  WARNING Insufficient basefee
+sim          WARNING Stopped: Insufficient basefee
 sim          INFO    --------------------
 sim          INFO    RUN test_creation: <tx sender=alice value=100 fee=0 data=[] datan=0>
 sim          DEBUG   Accessing storage 1000
@@ -29,7 +29,7 @@ sim          INFO    RUN test_bob_to_charlie_invalid: <tx sender=bob value=100 f
 sim          DEBUG   Accessing storage 1000
 sim          DEBUG   Accessing storage bob
 sim          DEBUG   Accessing storage bob
-subcurrency  WARNING Insufficient funds, bob has 1000 needs 1001
+sim          WARNING Stopped: Insufficient funds, bob has 1000 needs 1001
 sim          INFO    --------------------
 sim          INFO    RUN test_bob_to_charlie_valid: <tx sender=bob value=100 fee=0 data=['charlie', 1000] datan=2>
 sim          DEBUG   Accessing storage 1000
