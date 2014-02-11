@@ -1,10 +1,24 @@
-# Ethereum CLL Contract Emulator
+# Ethereum CLL Contract Simulator
+
+## Description
+
+Simulator of the Ethereum C-Like Language Contracts. The intention of this
+simulator is to help contract coders develop and test their work using test
+driven best practises and in full isolation, without the need to connect to the
+Ethereum Test Net.
+
+Contracts from the whitepaper are slightly modified to make them Python syntax
+compatible and contained within a `Contract` class. Automated testing scenarios
+are also written in a `Simulator` DSL (similar to unit tests) which can run,
+inspect and verify the outcome of contract runs.
 
 ## Usage
 
 `./run.py examples/subcurrency.py`
 
-## Example Output
+This will execute several simulation scenarios on the Sub-Currency example from the Ethereum whitepaper.
+
+### Example Output
 
 ```
 sim          INFO    RUN test_insufficient_fee: <tx sender=alice value=10 fee=0 data=[] datan=0>
@@ -44,4 +58,5 @@ subcurrency  INFO    <storage defaultdict(<type 'int'>, {1000: 1, 'charlie': 100
 ```
 
 ## License
+
 Released under the MIT License.
