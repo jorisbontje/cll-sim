@@ -30,7 +30,7 @@ def load_simulation_class(script):
     return sims[0]
 
 def main(script):
-    logging.basicConfig(format='%(asctime)s\t%(module)-12s %(levelname)-8s%(message)s',
+    logging.basicConfig(format='%(module)-12s %(levelname)-8s%(message)s',
                         level=logging.DEBUG)
 
     simulation_class = load_simulation_class(script)
