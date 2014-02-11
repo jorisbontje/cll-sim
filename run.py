@@ -3,12 +3,13 @@
 import argparse
 import imp
 import inspect
+import logging
 import os.path
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
 
-from sim import Block, Contract, Tx
+from sim import Simulation
 
 def get_subclasses(mod, cls):
     """Yield the classes in module ``mod`` that inherit from ``cls``"""
@@ -16,25 +17,25 @@ def get_subclasses(mod, cls):
         if hasattr(obj, "__bases__") and cls in obj.__bases__:
             yield obj
 
-def load_contract_class(script):
-    contract_name = os.path.splitext(os.path.basename(script))[0]
-    contract_module = imp.load_source(contract_name, script)
+def load_simulation_class(script):
+    sim_name = os.path.splitext(os.path.basename(script))[0]
+    sim_module = imp.load_source(sim_name, script)
 
-    contracts = list(get_subclasses(contract_module, Contract))
-    if len(contracts) < 1:
-        raise RuntimeError("No Contract found in %s" % script)
-    elif len(contracts) > 1:
-        raise RuntimeError("Multiple Contracts found in %s" % script)
+    sims = list(get_subclasses(sim_module, Simulation))
+    if len(sims) < 1:
+        raise RuntimeError("No Simulation found in %s" % script)
+    elif len(sims) > 1:
+        raise RuntimeError("Multiple Simulations found in %s" % script)
 
-    return contracts[0]
+    return sims[0]
 
 def main(script):
-    contract_class = load_contract_class(script)
-    contract = contract_class()
+    logging.basicConfig(format='%(asctime)s\t%(module)-12s %(levelname)-8s%(message)s',
+                        level=logging.DEBUG)
 
-    block = Block()
-    tx = Tx()
-    contract.run(tx, block)
+    simulation_class = load_simulation_class(script)
+    simulation = simulation_class()
+    simulation.run_all()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
