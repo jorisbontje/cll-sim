@@ -22,7 +22,7 @@ This will execute several simulation scenarios on the Sub-Currency example from 
 
 ```
 sim          INFO    RUN test_insufficient_fee: <tx sender=alice value=10 fee=0 data=[] datan=0>
-sim          WARNING Stopped: Insufficient basefee
+sim          WARNING Stopped: Insufficient fee
 sim          INFO    --------------------
 sim          INFO    RUN test_creation: <tx sender=alice value=100 fee=0 data=[] datan=0>
 sim          DEBUG   Accessing storage 1000

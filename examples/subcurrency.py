@@ -7,7 +7,7 @@ class SubCurrency(Contract):
 
     def run(self, tx, contract, block):
         if tx.value < 100 * block.basefee:
-            self.stop("Insufficient basefee")
+            self.stop("Insufficient fee")
         elif contract.storage[1000]:
             frm = tx.sender
             to = tx.data[0]
@@ -32,7 +32,7 @@ class SubCurrencyRun(Simulation):
     def test_insufficient_fee(self):
         tx = Tx(sender='alice', value=10)
         self.run(tx, self.contract)
-        assert self.stopped == 'Insufficient basefee'
+        assert self.stopped == 'Insufficient fee'
 
     def test_creation(self):
         tx = Tx(sender='alice', value=100)
