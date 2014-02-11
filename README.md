@@ -12,13 +12,24 @@ compatible and contained within a `Contract` class. Automated testing scenarios
 are also written in a `Simulator` DSL (similar to unit tests) which can run,
 inspect and verify the outcome of contract runs.
 
+## Working Examples
+
+| Name            | Original file                                       | Simulation                                |
+| --------------- | --------------------------------------------------- | ----------------------------------------- |
+| SubCurrency     | [subcurrency.cll](examples/subcurrency.cll)         | [subcurrency.py](examples/subcurrency.py) |
+| Namecoin        | [namecoin.cll](examples/namecoin.cll)               |                                           |
+| Datafeed        | [datafeed.cll](examples/datafeed.cll)               |                                           |
+| Hedging         | [hedging.cll](examples/hedging.cll)                 |                                           |
+| Egalitarian DAO | [egalitarian-dao.cll](examples/egalitarian-dao.cll) |                                           |
+
+
 ## Usage
 
 `./run.py examples/subcurrency.py`
 
 This will execute several simulation scenarios on the Sub-Currency example from the Ethereum whitepaper.
 
-### Example Output
+### Output
 
 ```
 sim          INFO    RUN test_insufficient_fee: <tx sender=alice value=10 fee=0 data=[] datan=0>
