@@ -3,7 +3,7 @@ if tx.value < 200 * block.basefee:
 if contract.storage[1000] == 0:
     if tx.value < 1000 * 10^18:
         stop
-    contract.storage[1000] = 0
+    contract.storage[1000] = 1
     contract.storage[1001] = 998 * block.contract_storage(D)[I]
     contract.storage[1002] = block.timestamp + 30 * 86400
     contract.storage[1003] = tx.sender
