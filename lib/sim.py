@@ -3,11 +3,27 @@ import inspect
 import logging
 from operator import itemgetter
 
+def is_called_by_contract(stack=None, offset=2):
+    if stack is None:
+        stack = inspect.stack()
+    caller_class = stack[offset][0].f_locals['self'].__class__
+    return Contract in caller_class.__bases__
+
+
 class Block(object):
+
+    def __init__(self, timestamp=0):
+        self.timestamp = timestamp
+        self._storages = defaultdict(Storage)
 
     @property
     def basefee(self):
         return 1
+
+    def contract_storage(self, key):
+        if is_called_by_contract():
+            logging.debug("Accessing contract_storage %s" % key)
+        return self._storages[key]
 
 
 class Stop(RuntimeError):
@@ -66,13 +82,6 @@ class Simulation(object):
                 logging.info("Stopped")
                 self.stopped = True
         logging.info('-' * 20)
-
-
-def is_called_by_contract(stack=None, offset=2):
-    if stack is None:
-        stack = inspect.stack()
-    caller_class = stack[offset][0].f_locals['self'].__class__
-    return Contract in caller_class.__bases__
 
 
 class Storage(object):
