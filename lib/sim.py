@@ -41,6 +41,11 @@ class Contract(object):
         self.warn = logging.warn
         self.error = logging.error
         self.storage = Storage()
+        self.txs = []
+
+    def mktx(self, recipient, amount, datan, data):
+        logging.info("Sending tx to %s of %s" % (recipient, amount))
+        self.txs.append((recipient, amount, datan, data))
 
     def run(self, tx, contract, block):
         raise NotImplementedError("Should have implemented this")
@@ -71,6 +76,8 @@ class Simulation(object):
 
         method_name = inspect.stack()[1][3]
         logging.info("RUN %s: %s" % (method_name, tx))
+
+        contract.txs = []
 
         try:
             contract.run(tx, contract, block)
