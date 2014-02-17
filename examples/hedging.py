@@ -1,4 +1,4 @@
-from sim import Contract, Tx, Simulation
+from sim import Block, Contract, Tx, Simulation
 
 class FinancialDerivative(Contract):
     """Financial derivatives contract example from https://www.ethereum.org/whitepaper/ethereum.html#p412"""
@@ -13,16 +13,18 @@ class FinancialDerivative(Contract):
         if contract.storage[1000] == 0:
             if tx.value < 1000 * 10 ** 18:
                 self.stop("Insufficient value")
-            contract.storage[1000] = 1
+            contract.storage[1000] = 1  # XXX Bug in contract example flag should be set
             contract.storage[1001] = 998 * block.contract_storage(self.D)[self.I]
             contract.storage[1002] = block.timestamp + 30 * 86400
             contract.storage[1003] = tx.sender
             self.log("Contract initialized")
         else:
             ethervalue = contract.storage[1001] / block.contract_storage(self.D)[self.I]
-            if ethervalue >= 5000 * 10 ** 18:
+            self.log("Ether Value = %s" % ethervalue)
+            if ethervalue >= 5000:  # XXX Bug in contract example, value shouldn't be times 10 ** 18
                 self.mktx(contract.storage[1003], 5000 * 10 ** 18, 0, 0)
             elif block.timestamp > contract.storage[1002]:
+# XXX Bug in contract example, values should be 10 ** 18
                 self.mktx(contract.storage[1003], ethervalue, 0, 0)
                 self.mktx(self.A, 5000 - ethervalue, 0, 0)
 
@@ -30,6 +32,7 @@ class FinancialDerivative(Contract):
 class HedgingRun(Simulation):
 
     contract = FinancialDerivative()
+    ts_zero = 1392632520
 
     def test_insufficient_fee(self):
         tx = Tx(sender='alice', value=10)
@@ -43,6 +46,33 @@ class HedgingRun(Simulation):
         assert self.contract.storage[1000] == 0
 
     def test_creation(self):
-        tx = Tx(sender='alice', value=1000 * 10 ** 18)
-        self.run(tx, self.contract)
+        block = Block(timestamp=self.ts_zero)
+# XXX Unclear how the exchange rate should be stored
+        block.contract_storage(self.contract.D)[self.contract.I] = 0.025 * 10 ** 18
+        tx = Tx(sender='bob', value=1000 * 10 ** 18)
+        self.run(tx, self.contract, block)
         assert self.contract.storage[1000] == 1
+        #assert self.contract.storage[1001] == ???
+        assert self.contract.storage[1002] == self.ts_zero + 30 * 86400
+        assert self.contract.storage[1003] == tx.sender
+        assert len(self.contract.txs) == 0
+
+    def test_ether_drops(self):
+        block = Block(timestamp=self.ts_zero + 30 * 86400 + 1)
+# XXX Unclear how the exchange rate should be stored
+        block.contract_storage(self.contract.D)[self.contract.I] = 0.004 * 10 ** 18
+        tx = Tx(sender='bob', value=200)
+        self.run(tx, self.contract, block)
+        assert len(self.contract.txs) == 1
+        assert self.contract.txs == [('bob', 5000 * 10 ** 18, 0, 0)]
+
+    def test_ether_rises(self):
+        block = Block(timestamp=self.ts_zero + 30 * 86400 + 1)
+# XXX Unclear how the exchange rate should be stored
+        block.contract_storage(self.contract.D)[self.contract.I] = 0.030 * 10 ** 18
+        tx = Tx(sender='bob', value=200)
+        self.run(tx, self.contract, block)
+        print self.contract.txs
+        assert len(self.contract.txs) == 2
+# XXX Bug in contract example
+        assert self.contract.txs == [('bob', 831.67, 0, 0), ('alice', 4168.3, 0, 0)]
