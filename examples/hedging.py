@@ -24,9 +24,9 @@ class FinancialDerivative(Contract):
             if ethervalue >= 5000:  # XXX Bug in contract example, value shouldn't be times 10 ** 18
                 self.mktx(contract.storage[1003], 5000 * 10 ** 18, 0, 0)
             elif block.timestamp > contract.storage[1002]:
-# XXX Bug in contract example, values should be 10 ** 18
-                self.mktx(contract.storage[1003], ethervalue, 0, 0)
-                self.mktx(self.A, 5000 - ethervalue, 0, 0)
+                # XXX Bug in contract example, values should be times 10 ** 18
+                self.mktx(contract.storage[1003], ethervalue * 10 ** 18, 0, 0)
+                self.mktx(self.A, (5000 - ethervalue) * 10 ** 18, 0, 0)
 
 
 class HedgingRun(Simulation):
@@ -47,20 +47,18 @@ class HedgingRun(Simulation):
 
     def test_creation(self):
         block = Block(timestamp=self.ts_zero)
-# XXX Unclear how the exchange rate should be stored
-        block.contract_storage(self.contract.D)[self.contract.I] = 0.025 * 10 ** 18
+        block.contract_storage(self.contract.D)[self.contract.I] = 2500
         tx = Tx(sender='bob', value=1000 * 10 ** 18)
         self.run(tx, self.contract, block)
         assert self.contract.storage[1000] == 1
-        #assert self.contract.storage[1001] == ???
+        assert self.contract.storage[1001] == 2495000
         assert self.contract.storage[1002] == self.ts_zero + 30 * 86400
         assert self.contract.storage[1003] == tx.sender
         assert len(self.contract.txs) == 0
 
     def test_ether_drops(self):
         block = Block(timestamp=self.ts_zero + 30 * 86400 + 1)
-# XXX Unclear how the exchange rate should be stored
-        block.contract_storage(self.contract.D)[self.contract.I] = 0.004 * 10 ** 18
+        block.contract_storage(self.contract.D)[self.contract.I] = 400
         tx = Tx(sender='bob', value=200)
         self.run(tx, self.contract, block)
         assert len(self.contract.txs) == 1
@@ -68,11 +66,9 @@ class HedgingRun(Simulation):
 
     def test_ether_rises(self):
         block = Block(timestamp=self.ts_zero + 30 * 86400 + 1)
-# XXX Unclear how the exchange rate should be stored
-        block.contract_storage(self.contract.D)[self.contract.I] = 0.030 * 10 ** 18
+        block.contract_storage(self.contract.D)[self.contract.I] = 4000
         tx = Tx(sender='bob', value=200)
         self.run(tx, self.contract, block)
         print self.contract.txs
         assert len(self.contract.txs) == 2
-# XXX Bug in contract example
-        assert self.contract.txs == [('bob', 831.67, 0, 0), ('alice', 4168.3, 0, 0)]
+        assert self.contract.txs == [('bob', 623 * 10 ** 18, 0, 0), ('alice', 4377 * 10 ** 18, 0, 0)]
