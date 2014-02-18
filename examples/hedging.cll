@@ -9,8 +9,8 @@ if contract.storage[1000] == 0:
     contract.storage[1003] = tx.sender
 else:
     ethervalue = contract.storage[1001] / block.contract_storage(D)[I]
-    if ethervalue >= 5000 * 10^18:
+    if ethervalue >= 5000:
         mktx(contract.storage[1003],5000 * 10^18,0,0)
     else if block.timestamp > contract.storage[1002]:
-        mktx(contract.storage[1003],ethervalue,0,0)
-        mktx(A,5000 - ethervalue,0,0)
+        mktx(contract.storage[1003],ethervalue * 10^18,0,0)
+        mktx(A,(5000 - ethervalue) * 10^18,0,0)
