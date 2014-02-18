@@ -1,7 +1,7 @@
 from sim import Block, Contract, Tx, Simulation
 
 class FinancialDerivative(Contract):
-    """Financial derivatives contract example from https://www.ethereum.org/whitepaper/ethereum.html#p412"""
+    """Financial derivatives contract example from https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper#wiki-financial-derivatives"""
 
     def run(self, tx, contract, block):
         if tx.value < 200 * block.basefee:

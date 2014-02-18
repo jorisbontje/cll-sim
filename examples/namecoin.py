@@ -1,7 +1,7 @@
 from sim import Contract, Tx, Simulation
 
 class Namecoin(Contract):
-    """Namecoin contract example from http://www.ethereum.org/ethereum.html#p413"""
+    """Namecoin contract example from https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper#wiki-identity-and-reputation-systems"""
 
     def run(self, tx, contract, block):
         if tx.value < block.basefee * 200:

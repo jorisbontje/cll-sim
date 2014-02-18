@@ -1,7 +1,7 @@
 from sim import Contract, Tx, Simulation
 
 class DataFeed(Contract):
-    """DataFeed contract example from http://www.ethereum.org/ethereum.html#p412"""
+    """DataFeed contract example from https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper#wiki-financial-derivatives"""
 
     def run(self, tx, contract, block):
         if tx.sender != self.FEEDOWNER:

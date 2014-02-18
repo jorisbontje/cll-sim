@@ -1,7 +1,7 @@
 from sim import Contract, Tx, Simulation
 
 class SubCurrency(Contract):
-    """Sub-currency contract example from http://www.ethereum.org/ethereum.html#p411"""
+    """Sub-currency contract example from https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper#wiki-sub-currencies"""
 
     def run(self, tx, contract, block):
         if tx.value < 100 * block.basefee:
