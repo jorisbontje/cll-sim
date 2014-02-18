@@ -3,10 +3,6 @@ from sim import Block, Contract, Tx, Simulation
 class FinancialDerivative(Contract):
     """Financial derivatives contract example from https://www.ethereum.org/whitepaper/ethereum.html#p412"""
 
-    A = "alice"
-    D = "datafeed"
-    I = "USD"
-
     def run(self, tx, contract, block):
         if tx.value < 200 * block.basefee:
             self.stop("Insufficient fee")
@@ -31,7 +27,7 @@ class FinancialDerivative(Contract):
 
 class HedgingRun(Simulation):
 
-    contract = FinancialDerivative()
+    contract = FinancialDerivative(A="alice", D="datafeed", I="USD")
     ts_zero = 1392632520
 
     def test_insufficient_fee(self):

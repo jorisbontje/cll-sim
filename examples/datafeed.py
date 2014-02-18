@@ -3,10 +3,6 @@ from sim import Contract, Tx, Simulation
 class DataFeed(Contract):
     """DataFeed contract example from http://www.ethereum.org/ethereum.html#p412"""
 
-    def __init__(self, feed_owner, *args, **kwargs):
-        super(DataFeed, self).__init__(*args, **kwargs)
-        self.FEEDOWNER = feed_owner
-
     def run(self, tx, contract, block):
         if tx.sender != self.FEEDOWNER:
             self.stop('Sender is not feed owner')
@@ -14,7 +10,7 @@ class DataFeed(Contract):
 
 class DataFeedRun(Simulation):
 
-    contract = DataFeed('alice')
+    contract = DataFeed(FEEDOWNER='alice')
 
     def test_invalid_sender(self):
         tx = Tx(sender='bob')

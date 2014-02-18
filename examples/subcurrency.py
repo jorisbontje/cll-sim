@@ -3,8 +3,6 @@ from sim import Contract, Tx, Simulation
 class SubCurrency(Contract):
     """Sub-currency contract example from http://www.ethereum.org/ethereum.html#p411"""
 
-    MYCREATOR = "alice"
-
     def run(self, tx, contract, block):
         if tx.value < 100 * block.basefee:
             self.stop("Insufficient fee")
@@ -27,7 +25,7 @@ class SubCurrency(Contract):
 
 class SubCurrencyRun(Simulation):
 
-    contract = SubCurrency()
+    contract = SubCurrency(MYCREATOR="alice")
 
     def test_insufficient_fee(self):
         tx = Tx(sender='alice', value=10)

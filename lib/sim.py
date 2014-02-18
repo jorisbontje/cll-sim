@@ -36,12 +36,17 @@ class Contract(object):
     def contract(self):
         return self
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.log = logging.info
         self.warn = logging.warn
         self.error = logging.error
         self.storage = Storage()
         self.txs = []
+
+        # initializing constants
+        for (arg, value) in kwargs.iteritems():
+            logging.debug("Initializing constant %s = %s" % (arg, value))
+            setattr(self, arg, value)
 
     def mktx(self, recipient, amount, datan, data):
         logging.info("Sending tx to %s of %s" % (recipient, amount))
