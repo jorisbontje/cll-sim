@@ -3,12 +3,25 @@ import inspect
 import logging
 from operator import itemgetter
 
-def is_called_by_contract(stack=None, offset=2):
+def _infer_self(stack=None, offset=2):
     if stack is None:
         stack = inspect.stack()
-    caller_class = stack[offset][0].f_locals['self'].__class__
+    return stack[offset][0].f_locals['self']
+
+def _is_called_by_contract():
+    self = _infer_self(inspect.stack())
+    caller_class = self.__class__
     return Contract in caller_class.__bases__
 
+def mktx(recipient, amount, datan, data):
+    self = _infer_self()
+    logging.info("Sending tx to %s of %s" % (recipient, amount))
+    self.txs.append((recipient, amount, datan, data))
+
+def stop(reason):
+    raise Stop(reason)
+
+log = logging.info
 
 class Block(object):
 
@@ -21,7 +34,7 @@ class Block(object):
         return 1
 
     def contract_storage(self, key):
-        if is_called_by_contract():
+        if _is_called_by_contract():
             logging.debug("Accessing contract_storage %s" % key)
         return self._storages[key]
 
@@ -37,9 +50,6 @@ class Contract(object):
         return self
 
     def __init__(self, *args, **kwargs):
-        self.log = logging.info
-        self.warn = logging.warn
-        self.error = logging.error
         self.storage = Storage()
         self.txs = []
 
@@ -48,15 +58,8 @@ class Contract(object):
             logging.debug("Initializing constant %s = %s" % (arg, value))
             setattr(self, arg, value)
 
-    def mktx(self, recipient, amount, datan, data):
-        logging.info("Sending tx to %s of %s" % (recipient, amount))
-        self.txs.append((recipient, amount, datan, data))
-
     def run(self, tx, contract, block):
         raise NotImplementedError("Should have implemented this")
-
-    def stop(self, reason):
-        raise Stop(reason)
 
 
 class Simulation(object):
@@ -102,12 +105,12 @@ class Storage(object):
         self._storage = defaultdict(int)
 
     def __getitem__(self, key):
-        if is_called_by_contract():
+        if _is_called_by_contract():
             logging.debug("Accessing storage %s" % key)
         return self._storage[key]
 
     def __setitem__(self, key, value):
-        if is_called_by_contract():
+        if _is_called_by_contract():
             logging.debug("Setting storage %s to %s" % (key, value))
         self._storage[key] = value
 

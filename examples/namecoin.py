@@ -1,14 +1,15 @@
-from sim import Contract, Tx, Simulation
+from sim import Contract, Simulation, Tx, stop
 
 class Namecoin(Contract):
     """Namecoin contract example from https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper#wiki-identity-and-reputation-systems"""
 
     def run(self, tx, contract, block):
         if tx.value < block.basefee * 200:
-            self.stop("Insufficient fee")
+            stop("Insufficient fee")
         if contract.storage[tx.data[0]] or tx.data[0] < 100:
-            self.stop("Key already reserved")
+            stop("Key already reserved")
         contract.storage[tx.data[0]] = tx.data[1]
+
 
 class NamecoinRun(Simulation):
 

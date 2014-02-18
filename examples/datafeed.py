@@ -1,12 +1,13 @@
-from sim import Contract, Tx, Simulation
+from sim import Contract, Tx, Simulation, stop
 
 class DataFeed(Contract):
     """DataFeed contract example from https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper#wiki-financial-derivatives"""
 
     def run(self, tx, contract, block):
         if tx.sender != self.FEEDOWNER:
-            self.stop('Sender is not feed owner')
+            stop('Sender is not feed owner')
         contract.storage[tx.data[0]] = tx.data[1]
+
 
 class DataFeedRun(Simulation):
 

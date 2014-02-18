@@ -1,28 +1,28 @@
-from sim import Block, Contract, Tx, Simulation
+from sim import Block, Contract, Simulation, Tx, log, mktx, stop
 
 class FinancialDerivative(Contract):
     """Financial derivatives contract example from https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper#wiki-financial-derivatives"""
 
     def run(self, tx, contract, block):
         if tx.value < 200 * block.basefee:
-            self.stop("Insufficient fee")
+            stop("Insufficient fee")
         if contract.storage[1000] == 0:
             if tx.value < 1000 * 10 ** 18:
-                self.stop("Insufficient value")
+                stop("Insufficient value")
             contract.storage[1000] = 1  # XXX Bug in contract example flag should be set
             contract.storage[1001] = 998 * block.contract_storage(self.D)[self.I]
             contract.storage[1002] = block.timestamp + 30 * 86400
             contract.storage[1003] = tx.sender
-            self.log("Contract initialized")
+            log("Contract initialized")
         else:
             ethervalue = contract.storage[1001] / block.contract_storage(self.D)[self.I]
-            self.log("Ether Value = %s" % ethervalue)
+            log("Ether Value = %s" % ethervalue)
             if ethervalue >= 5000:  # XXX Bug in contract example, value shouldn't be times 10 ** 18
-                self.mktx(contract.storage[1003], 5000 * 10 ** 18, 0, 0)
+                mktx(contract.storage[1003], 5000 * 10 ** 18, 0, 0)
             elif block.timestamp > contract.storage[1002]:
                 # XXX Bug in contract example, values should be times 10 ** 18
-                self.mktx(contract.storage[1003], ethervalue * 10 ** 18, 0, 0)
-                self.mktx(self.A, (5000 - ethervalue) * 10 ** 18, 0, 0)
+                mktx(contract.storage[1003], ethervalue * 10 ** 18, 0, 0)
+                mktx(self.A, (5000 - ethervalue) * 10 ** 18, 0, 0)
 
 
 class HedgingRun(Simulation):
