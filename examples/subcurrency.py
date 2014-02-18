@@ -18,8 +18,8 @@ class SubCurrency(Contract):
             contract.storage[frm] = contract.storage[frm] - value
             contract.storage[to] = contract.storage[to] + value
         else:
-            log("Initializing storage for creator %s" % self.MYCREATOR)
-            contract.storage[self.MYCREATOR] = 10 ** 18
+            log("Initializing storage for creator %s" % MYCREATOR)
+            contract.storage[MYCREATOR] = 10 ** 18
             contract.storage[1000] = 1
 
 

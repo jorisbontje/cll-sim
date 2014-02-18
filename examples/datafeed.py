@@ -4,7 +4,7 @@ class DataFeed(Contract):
     """DataFeed contract example from https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper#wiki-financial-derivatives"""
 
     def run(self, tx, contract, block):
-        if tx.sender != self.FEEDOWNER:
+        if tx.sender != FEEDOWNER:
             stop('Sender is not feed owner')
         contract.storage[tx.data[0]] = tx.data[1]
 

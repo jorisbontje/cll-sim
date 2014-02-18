@@ -3,6 +3,11 @@ import inspect
 import logging
 from operator import itemgetter
 
+def _modify_frame_global(key, value, stack=None, offset=2):
+    if stack is None:
+        stack = inspect.stack()
+    stack[offset][0].f_globals[key] = value
+
 def _infer_self(stack=None, offset=2):
     if stack is None:
         stack = inspect.stack()
@@ -53,10 +58,16 @@ class Contract(object):
         self.storage = Storage()
         self.txs = []
 
+        caller_module = _infer_self(offset=1)
+
         # initializing constants
         for (arg, value) in kwargs.iteritems():
+            if not arg.isupper():
+                raise KeyError("Constant '%s' should be uppercase" % arg)
+
             logging.debug("Initializing constant %s = %s" % (arg, value))
-            setattr(self, arg, value)
+            setattr(caller_module, arg, value)
+            _modify_frame_global(arg, value)
 
     def run(self, tx, contract, block):
         raise NotImplementedError("Should have implemented this")
