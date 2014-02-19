@@ -11,5 +11,5 @@ elif contract.storage[1000]:
     contract.storage[from] = contract.storage[from] - value
     contract.storage[to] = contract.storage[to] + value
 else:
-    contract.storage[mycreator] = 10^18
+    contract.storage[MYCREATOR] = 10^18
     contract.storage[1000] = 1
