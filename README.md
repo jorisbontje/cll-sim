@@ -20,6 +20,7 @@ inspect and verify the outcome of contract runs.
 | Namecoin        | [namecoin.cll](examples/namecoin.cll)               | [namecoin.py](examples/namecoin.py)       |
 | Datafeed        | [datafeed.cll](examples/datafeed.cll)               | [datafeed.py](examples/datafeed.py)       |
 | Hedging         | [hedging.cll](examples/hedging.cll)                 | [hedging.py](examples/hedging.py)         |
+| Fountain        | [fountain.cll](examples/fountain.cll)               | [fountain.py](examples/fountain.py)       |
 | Egalitarian DAO | [egalitarian-dao.cll](examples/egalitarian-dao.cll) |                                           |
 
 

@@ -33,6 +33,15 @@ class Block(object):
     def __init__(self, timestamp=0):
         self.timestamp = timestamp
         self._storages = defaultdict(Storage)
+        self._balances = defaultdict(int)
+
+    def account_balance(self, account):
+        if _is_called_by_contract():
+            logging.debug("Accessing account_balance '%s'" % account)
+        return self._balances[account]
+
+    def set_account_balance(self, account, value):
+        self._balances[account] = value
 
     @property
     def basefee(self):
@@ -40,7 +49,7 @@ class Block(object):
 
     def contract_storage(self, key):
         if _is_called_by_contract():
-            logging.debug("Accessing contract_storage %s" % key)
+            logging.debug("Accessing contract_storage '%s'" % key)
         return self._storages[key]
 
 
@@ -117,12 +126,12 @@ class Storage(object):
 
     def __getitem__(self, key):
         if _is_called_by_contract():
-            logging.debug("Accessing storage %s" % key)
+            logging.debug("Accessing storage '%s'" % key)
         return self._storage[key]
 
     def __setitem__(self, key, value):
         if _is_called_by_contract():
-            logging.debug("Setting storage %s to %s" % (key, value))
+            logging.debug("Setting storage '%s' to '%s'" % (key, value))
         self._storage[key] = value
 
     def __repr__(self):
