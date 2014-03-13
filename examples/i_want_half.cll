@@ -55,6 +55,9 @@ else:
             creator = contract.storage[I_WITHDRAW_CREATOR]
             if creator != 0 and contract.storage[I_WITHDRAW_TO] == tx.data[1] and contract.storage[I_WITHDRAW_AMOUNT] == tx.data[2] and creator != tx.sender:
                 mktx(tx.data[1], tx.data[2], 0, 0)
+                contract.storage[I_WITHDRAW_TO] = 0
+                contract.storage[I_WITHDRAW_AMOUNT] = 0
+                contract.storage[I_WITHDRAW_CREATOR] = 0
             else:
                 contract.storage[I_WITHDRAW_TO] = tx.data[1]
                 contract.storage[I_WITHDRAW_AMOUNT] = tx.data[2]

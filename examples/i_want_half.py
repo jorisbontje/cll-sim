@@ -55,6 +55,9 @@ class Marriage(Contract):
                     creator = contract.storage[I_WITHDRAW_CREATOR]
                     if creator != 0 and contract.storage[I_WITHDRAW_TO] == tx.data[1] and contract.storage[I_WITHDRAW_AMOUNT] == tx.data[2] and creator != tx.sender:
                         mktx(tx.data[1], tx.data[2], 0, 0)
+                        contract.storage[I_WITHDRAW_TO] = 0
+                        contract.storage[I_WITHDRAW_AMOUNT] = 0
+                        contract.storage[I_WITHDRAW_CREATOR] = 0
                     else:
                         contract.storage[I_WITHDRAW_TO] = tx.data[1]
                         contract.storage[I_WITHDRAW_AMOUNT] = tx.data[2]
@@ -93,6 +96,14 @@ class MarriageRun(Simulation):
         assert self.contract.storage[I_PARTNER_1] == PARTNER_1
         assert self.contract.storage[I_PARTNER_2] == PARTNER_2
         assert self.contract.storage[I_STATE] == S_PROPOSED
+
+    def test_withdraw_not_married_fails(self):
+        tx = Tx(sender=PARTNER_1, value=100, data=[TX_WITHDRAW, MERCHANT_ADDRESS, MERCHANT_AMOUNT])
+        self.run(tx, self.contract)
+
+        assert self.contract.storage[I_WITHDRAW_TO] == 0
+        assert self.contract.storage[I_WITHDRAW_AMOUNT] == 0
+        assert self.contract.storage[I_WITHDRAW_CREATOR] == 0
 
     def test_accept(self):
         tx = Tx(sender=PARTNER_2, value=100, data=[PARTNER_1])
@@ -133,3 +144,11 @@ class MarriageRun(Simulation):
         assert self.contract.storage[I_STATE] == S_DIVORCED
         assert len(self.contract.txs) == 2
         assert self.contract.txs == [(PARTNER_1, 500, 0, 0), (PARTNER_2, 500, 0, 0)]
+
+    def test_withdraw_after_divorce_fails(self):
+        tx = Tx(sender=PARTNER_1, value=100, data=[TX_WITHDRAW, MERCHANT_ADDRESS, MERCHANT_AMOUNT])
+        self.run(tx, self.contract)
+
+        assert self.contract.storage[I_WITHDRAW_TO] == 0
+        assert self.contract.storage[I_WITHDRAW_AMOUNT] == 0
+        assert self.contract.storage[I_WITHDRAW_CREATOR] == 0
