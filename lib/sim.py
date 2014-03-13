@@ -60,6 +60,10 @@ class Stop(RuntimeError):
 class Contract(object):
 
     @property
+    def address(self):
+        return "myaddress"
+
+    @property
     def contract(self):
         return self
 
