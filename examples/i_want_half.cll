@@ -5,20 +5,6 @@
 # - Nick Savers
 # - Joris Bontje
 
-# Parties
-#- Partner 1
-#- Partner 2
-
-# State
-#0 - Start
-#1 - Married
-#2 - Divorced
-
-# Storage
-# 1000 - State
-# 1001 - Partner 1
-# 1002 - Partner 2
-
 I_STATE = 1000
 I_PARTNER_1 = 1001
 I_PARTNER_2 = 1002
