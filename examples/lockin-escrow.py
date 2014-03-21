@@ -2,7 +2,7 @@ from sim import Block, Contract, Simulation, Tx, mktx, stop
 from random import random
 import inspect
 
-# Constants to modify before contract creation
+# Constants to modify before contract creation.
 CUSTOMER = "carol"
 MERCHANT = "mike"
 
@@ -15,7 +15,7 @@ TOTAL = PRICE+INCENTIVE
 
 #Merchant can:
 C_ALLOW = 1 #Allows a customer to use the script.
-C_REFUND= 2 #Refund initiated by merchant
+C_REFUND= 2 #Refund initiated by merchant.
 
 # Customer can:
 C_SATISFIED = 1 #Indicate satisfaction.
@@ -37,6 +37,9 @@ class LockinEscrow(Contract):
     
     Counterexample of the idea that ethereum contracts cant do more than the
     real world can, even though it is clearly less desirable than 'real' escrow.
+
+    NOTE: 'Offered refunds' might be nice; those would have to be accepted by
+    the customer, but dont involve any MIN_BALANCE being taken away from the merchant.
 """
 
     def run(self, tx, contract, block):
@@ -54,7 +57,8 @@ class LockinEscrow(Contract):
                 contract.storage[I_INCENTIVE]= tx.data[3]
                 stop("Customer allowed")
             if tx.data[0] == C_REFUND and customer != 0 :
-                mktx(customer, contract.storage[I_TOTAL] + MIN_BALANCE,0,[])
+                refund = contract.storage[I_PAID] + contract.storage[I_PAID]*MIN_BALANCE/contract.storage[I_TOTAL]
+                mktx(customer,max(refund, contract.storage[I_TOTAL]+MIN_BALANCE), 0,[])
                 contract.storage[I_CUSTOMER] = 0
                 contract.storage[I_TOTAL] = 0
                 contract.storage[I_INCENTIVE] = 0
