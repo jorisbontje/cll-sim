@@ -111,7 +111,7 @@ class Simulation(object):
 
         if method_name is None:
             method_name = inspect.stack()[1][3]
-        
+
         logging.info("RUN %s: %s" % (method_name, tx))
 
         contract.txs = []
