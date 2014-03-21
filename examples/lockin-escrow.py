@@ -51,7 +51,9 @@ class LockinEscrow(Contract):
         if tx.sender == MERCHANT :
             if block.account_balance(contract.address) < MIN_BALANCE :
                 stop("Below funds of operation")
-            if tx.data[0] == C_ALLOW and customer == 0 :
+            if tx.data[0] == C_ALLOW :
+                if customer != 0 :
+                    stop("Customer change blocked") #..when earlier customer still busy.
                 contract.storage[I_CUSTOMER] = tx.data[1]
                 contract.storage[I_TOTAL]    = tx.data[2]
                 contract.storage[I_INCENTIVE]= tx.data[3]
@@ -109,6 +111,11 @@ class LockinEscrowRun(Simulation):
         assert self.contract.storage[I_INCENTIVE] == INCENTIVE
         assert self.contract.storage[I_PAID] == 0
 
+    def test_customer_change_blocked(self):
+        self.run_tx(sender=MERCHANT, value= MIN_BALANCE + MIN_FEE,
+                   data=[C_ALLOW,CUSTOMER,TOTAL,INCENTIVE])
+        self.stopped == "Customer change blocked"        
+    
     def test_customer_pay(self) :
         self.run_tx(sender=CUSTOMER, value= random()*PRICE)
         assert self.stopped =="Customer paid(part)"
