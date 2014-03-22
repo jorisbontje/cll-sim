@@ -14,7 +14,7 @@ if tx.sender == MERCHANT:
     if tx.data[0] == C_REFUND and customer != 0:
         refund =  contract.storage[I_PAID]
         refund += contract.storage[I_PAID]*MIN_BALANCE/contract.storage[I_TOTAL]
-         mktx(customer, max(refund, contract.storage[I_TOTAL]+MIN_BALANCE), 0, [])
+         mktx(customer, min(refund, contract.storage[I_TOTAL]+MIN_BALANCE), 0, [])
         contract.storage[I_CUSTOMER] = 0
         contract.storage[I_TOTAL] = 0
         contract.storage[I_INCENTIVE] = 0

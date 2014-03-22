@@ -1,7 +1,6 @@
 from sim import Block, Contract, Simulation, Tx, mktx, stop
 from random import random
 import inspect
-import logging
 
 # Constants to modify before contract creation.
 CUSTOMER = "carol"
@@ -107,7 +106,7 @@ class LockinEscrowRun(Simulation):
         self.total     = 0
         self.incentive = 0
         self.paid      = 0
-        
+
     def run_tx(self, value=0, sender="", data=[]):
         self.run(Tx(value=value, sender=sender, data=data), self.contract, self.block,
                  method_name=inspect.stack()[1][3])
@@ -123,8 +122,8 @@ class LockinEscrowRun(Simulation):
 
     def test_merchant_allow(self):
         #Test intended when contract not busy.
-        assert self.contract.storage[I_CUSTOMER] == 0 
-        
+        assert self.contract.storage[I_CUSTOMER] == 0
+
         self.block.set_account_balance(self.contract.address, MIN_BALANCE)
         self.incentive = random_incentive()
         self.total     = PRICE + self.incentive
@@ -146,13 +145,13 @@ class LockinEscrowRun(Simulation):
 
     def test_customer_pay(self):
         self.paid = random()*PRICE
-        self.run_tx(sender=CUSTOMER, value=self.paid)
+        self.run_tx(sender=CUSTOMER, value=self.paid + MIN_FEE)
         assert self.stopped == "Customer paid(part)"
 
     def test_customer_pay_too_little(self):
         self.reset()
         self.test_merchant_allow()
-        self.paid = random()*TOTAL
+        self.paid = random()*0.9*self.total
         self.run_tx(sender=CUSTOMER, value=self.paid + MIN_FEE, data=[C_SATISFIED])
         assert self.stopped == "Customer didnt pay enough"
         assert len(self.contract.txs) == 0
@@ -181,14 +180,14 @@ class LockinEscrowRun(Simulation):
     def test_customer_pay_part(self):
         self.assert_reset()
         self.test_merchant_allow()
-        self.paid = self.total
+        self.paid = self.total + 1
         self.run_tx(sender=CUSTOMER, value=self.paid + MIN_FEE)
         assert self.stopped == "Customer paid(part)"  # (all, actually)
-        assert self.contract.storage[I_PAID] == self.total
+        assert self.contract.storage[I_PAID] == self.total + 1
 
     def test_customer_happy(self):  # depends on the pay one being run first.
         self.paid += 1
-        self.run_tx(sender=CUSTOMER, value=MIN_FEE+1, data=[C_SATISFIED])
+        self.run_tx(sender=CUSTOMER, value=MIN_FEE + 1, data=[C_SATISFIED])
         assert self.contract.txs[0][0] == MERCHANT
         assert self.contract.txs[0][1] == self.paid - self.incentive
         assert self.contract.txs[1][0] == CUSTOMER
