@@ -95,9 +95,11 @@ class Contract(object):
         raise NotImplementedError("Should have implemented this")
 
     def load(self, script, tx, contract, block):
-        closure = 'from sim import Block, Contract, Simulation, Tx, log, mktx, stop, array\n\
-class HLL(Contract):\n\
-    def run(self, tx, contract, block):\n'
+        closure = """
+from sim import Block, Contract, Simulation, Tx, log, mktx, stop, array
+class HLL(Contract):
+    def run(self, tx, contract, block):
+"""
         with open(script) as fp:
             for i, line in enumerate(fp):
                 # Use comments for stop and log messages
@@ -109,10 +111,16 @@ class HLL(Contract):\n\
                         s = l.split("//")[1].strip()
                     line = line.split("stop")[0] + "stop('%s')\n" % s
                 elif "//" in line:
-                    s = l.split("//")[1].strip()
+                    try:
+                        s = eval(l.split("//")[1].strip())
+                    except:
+                        s = l.split("//")[1].strip()
                     indent = len(line) - len(line.lstrip())
                     line = line.split("//")[0]
-                    line += "\n" + '        ' + " " * indent + "log('%s')\n" % ("@ line " + str(i) + ": " + s)
+                    line += "\n        "
+                    if l.split("//")[0].strip().endswith(":"):
+                        line += "    "
+                    line += " " * indent + "log('@ line %d: %s')\n" % (i, s)
 
                 # Indent
                 closure += '        ' + line
