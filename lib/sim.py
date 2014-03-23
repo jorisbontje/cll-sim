@@ -1,4 +1,7 @@
 from collections import defaultdict
+import os
+import sys
+import imp
 import inspect
 import logging
 from operator import itemgetter
@@ -25,6 +28,9 @@ def mktx(recipient, amount, datan, data):
 
 def stop(reason):
     raise Stop(reason)
+
+def array(n):
+    return [None] * n
 
 log = logging.info
 
@@ -64,7 +70,7 @@ class Contract(object):
 
     @property
     def address(self):
-        return "myaddress"
+        return hex(id(self))
 
     @property
     def contract(self):
@@ -88,6 +94,50 @@ class Contract(object):
     def run(self, tx, contract, block):
         raise NotImplementedError("Should have implemented this")
 
+    def load(self, script, tx, contract, block):
+        closure = """
+from sim import Block, Contract, Simulation, Tx, log, mktx, stop, array
+class HLL(Contract):
+    def run(self, tx, contract, block):
+"""
+        with open(script) as fp:
+            for i, line in enumerate(fp):
+                # Use comments for stop and log messages
+                l = line.strip()
+                if l.startswith("stop"):
+                    # Line number as default stop message
+                    s = "line " + str(i)
+                    if '//' in line:
+                        s = l.split("//")[1].strip()
+                        if not s.startswith('"'):
+                            s = '"' + s + '"'
+                    line = line.split("stop")[0] + "stop(%s)\n" % s
+                elif "//" in line:
+                    s = l.split("//")[1].strip()
+                    if s.startswith('"'):
+                        s = "log('@ line %d: ' + %s)\n" % (i, s)
+                    else:
+                        s = "log('@ line %d: %s')\n" % (i, s)
+                    indent = len(line) - len(line.lstrip())
+                    line = line.split("//")[0]
+                    line += "\n        "
+                    if l.split("//")[0].strip().endswith(":"):
+                        line += "    "
+                    line += " " * indent + s
+
+                # Indent
+                closure += '        ' + line
+
+        # Exponents
+        closure = closure.replace("^", "**")
+
+        # Comments
+        closure = closure.replace("//", "#")
+
+        closure_module = imp.new_module('hll')
+        exec(closure, closure_module.__dict__)
+        h = closure_module.HLL()
+        h.run(tx, contract, block)
 
 class Simulation(object):
 
