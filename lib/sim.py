@@ -109,18 +109,21 @@ class HLL(Contract):
                     s = "line " + str(i)
                     if '//' in line:
                         s = l.split("//")[1].strip()
-                    line = line.split("stop")[0] + "stop('%s')\n" % s
+                        if not s.startswith('"'):
+                            s = '"' + s + '"'
+                    line = line.split("stop")[0] + "stop(%s)\n" % s
                 elif "//" in line:
-                    try:
-                        s = eval(l.split("//")[1].strip())
-                    except:
-                        s = l.split("//")[1].strip()
+                    s = l.split("//")[1].strip()
+                    if s.startswith('"'):
+                        s = "log('@ line %d: ' + %s)\n" % (i, s)
+                    else:
+                        s = "log('@ line %d: %s')\n" % (i, s)
                     indent = len(line) - len(line.lstrip())
                     line = line.split("//")[0]
                     line += "\n        "
                     if l.split("//")[0].strip().endswith(":"):
                         line += "    "
-                    line += " " * indent + "log('@ line %d: %s')\n" % (i, s)
+                    line += " " * indent + s
 
                 # Indent
                 closure += '        ' + line
