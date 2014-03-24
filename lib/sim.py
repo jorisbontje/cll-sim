@@ -127,7 +127,7 @@ class HLL(Contract):
                         if l.split("//")[0].strip().endswith(":"):
                             line += "    "
                         line += "log('@ line %d: %s" % (i, s)
-                        r[0] = unicode(r[0])
+                        r[1] = str(r[1])
                         if isinstance(r[0], str):
                             line += ", %%s as hex: 0x%%s' %% (%s," % r[1]
                             line += "%s.encode('hex')) + " % r[1]

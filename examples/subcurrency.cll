@@ -8,7 +8,7 @@ elif contract.storage[1000]: // Running contract...
         stop // "tx.data[0] out of bounds: %s" % tx.data[0]
     bal = contract.storage[frm] // "Balance of %s: %d" % (frm, bal)
     if bal < value:
-        stop // "Insufficient funds, bob has %d needs %d" % (bal, value)
+        stop // "Insufficient funds, %s has %d needs %d" % (frm, bal, value)
     else: // "Adjusting values by %d" % value
         contract.storage[frm] = contract.storage[frm] - value
         contract.storage[to] = contract.storage[to] + value
