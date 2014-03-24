@@ -1,0 +1,37 @@
+if tx.value < MIN_FEE * block.basefee:
+    stop  # Insufficient fee
+customer = contract.storage[I_CUSTOMER]
+if tx.sender == MERCHANT:
+    if block.account_balance(contract.address) < MIN_BALANCE:
+        stop  # Below funds of operation
+    if tx.data[0] == C_ALLOW:
+        if customer != 0:  # ..when earlier customer still busy.
+            stop  # Customer change blocked
+        contract.storage[I_CUSTOMER]  = tx.data[1]
+        contract.storage[I_TOTAL]     = tx.data[2]
+        contract.storage[I_INCENTIVE] = tx.data[3]
+        stop  # Customer allowed
+    if tx.data[0] == C_REFUND and customer != 0:
+        refund =  contract.storage[I_PAID]
+        refund += contract.storage[I_PAID]*MIN_BALANCE/contract.storage[I_TOTAL]
+         mktx(customer, min(refund, contract.storage[I_TOTAL]+MIN_BALANCE), 0, [])
+        contract.storage[I_CUSTOMER] = 0
+        contract.storage[I_TOTAL] = 0
+        contract.storage[I_INCENTIVE] = 0
+        contract.storage[I_PAID] = 0
+        stop  # Customer refunded
+    stop  # Merchant topping up
+if tx.sender == customer:
+    contract.storage[I_PAID] = contract.storage[I_PAID] + tx.value - MIN_FEE*block.basefee
+    if tx.datan == 1 and tx.data[0] == C_SATISFIED:
+        if contract.storage[I_PAID] <= contract.storage[I_TOTAL]:
+            stop  # Customer didnt pay enough
+        mktx(MERCHANT, contract.storage[I_PAID], 0, [])
+        mktx(customer, contract.storage[I_INCENTIVE], 0, [])
+        contract.storage[I_CUSTOMER]  = 0
+        contract.storage[I_TOTAL]     = 0
+        contract.storage[I_INCENTIVE] = 0
+        contract.storage[I_PAID]      = 0
+        stop  # Customer paid and happy
+    stop  # Customer paid(part)
+stop  # Donation
