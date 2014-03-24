@@ -49,3 +49,9 @@ class SubCurrencyRun(Simulation):
 
     def test_storage_result(self):
         self.log(self.contract.storage)
+
+    # # Python module export
+    # def test_export(self):
+    #     print "\nClosure module\n==="
+    #     print self.contract.closure
+    #     print "\n===\nEnd module"
