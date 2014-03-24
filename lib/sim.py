@@ -154,6 +154,9 @@ class HLL(Contract):
             # Exponents
             closure = closure.replace("^", "**")
 
+            # Hex
+            closure = closure.replace("hex(", "str(")
+
             # Comments
             closure = closure.replace("//", "#")
 
