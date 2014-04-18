@@ -225,7 +225,7 @@ class Simulation(object):
         if method_name is None:
             method_name = inspect.stack()[1][3]
 
-        logging.info("RUN %s: %s" % (method_name.replace('_', ' ').capitalize(), tx)
+        logging.info("RUN %s: %s" % (method_name.replace('_', ' ').capitalize(), tx))
 
         msg = Msg(tx)
         contract.txs = []
