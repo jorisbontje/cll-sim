@@ -217,13 +217,15 @@ class Simulation(object):
         for name, method, linenr in sorted(test_methods, key=itemgetter(2)):
             method()
 
-    def run(self, tx, contract, block=None):
+    def run(self, tx, contract, block=None, method_name=None):
         self.stopped = False
         if block is None:
             block = Block()
 
-        method_name = inspect.stack()[1][3]
-        logging.info("RUN %s: %s" % (method_name.replace('_', ' ').capitalize(), tx))
+        if method_name is None:
+            method_name = inspect.stack()[1][3]
+
+        logging.info("RUN %s: %s" % (method_name.replace('_', ' ').capitalize(), tx)
 
         msg = Msg(tx)
         contract.txs = []
