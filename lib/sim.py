@@ -3,6 +3,7 @@ import os, sys, imp
 import inspect
 import logging
 from operator import itemgetter
+MINGASPRICE = 10000000000000
 
 def _modify_frame_global(key, value, stack=None, offset=2):
     if stack is None:
@@ -20,15 +21,38 @@ def _is_called_by_contract():
     return Contract in caller_class.__bases__
 
 def mktx(recipient, amount, datan, data):
-    self = _infer_self()
+    self = _infer_self(inspect.stack())
     logging.info("Sending tx to %s of %s" % (recipient, amount))
+    self.txs.append((recipient, amount, datan, data))
+
+def send(recipient, amount, gas):
+    self = _infer_self(inspect.stack())
+    logging.info("Sending tx to %s of %s" % (recipient, amount))
+    self.txs.append((recipient, amount, datan, data))
+
+def mkmsg(recipient, amount, gas, data, datan):
+    self = _infer_self(inspect.stack())
+    logging.info("Sending tx to %s of %s with data %s" % (recipient, amount, data))
     self.txs.append((recipient, amount, datan, data))
 
 def stop(reason):
     raise Stop(reason)
 
+def stopret(value, index=None):
+    if index:
+        raise Stop(value[index])
+    else:
+        raise Stop(value)
+
 def array(n):
     return [None] * n
+
+def suicide(address):
+    self = _infer_self(inspect.stack())
+    balance = self.balance[self.address]
+    logging.info("Suicide balance of %s from %s to %s" % (balance, self.address, address))
+    self.txs.append((address, balance, 0, 0))
+    self.balance[self.address] = 0
 
 log = logging.info
 
@@ -40,24 +64,16 @@ class Block(object):
         self.number = number
         self.parenthash = parenthash
         self._storages = defaultdict(Storage)
-        self._balances = defaultdict(int)
-
-    def account_balance(self, account):
-        if _is_called_by_contract():
-            logging.debug("Accessing account_balance '%s'" % account)
-        return self._balances[account]
-
-    def set_account_balance(self, account, value):
-        self._balances[account] = value
+        self.gaslimit = 1 * 10 ^ 42
 
     @property
     def basefee(self):
         return 1
 
-    def contract_storage(self, key):
-        if _is_called_by_contract():
-            logging.debug("Accessing contract_storage '%s'" % key)
-        return self._storages[key]
+    # def contract_storage(self, key): # :(
+    #     if _is_called_by_contract():
+    #         logging.debug("Accessing contract_storage '%s'" % key)
+    #     return self._storages[key]
 
 
 class Stop(RuntimeError):
@@ -76,6 +92,7 @@ class Contract(object):
 
     def __init__(self, *args, **kwargs):
         self.storage = Storage()
+        self.balance = Balance() # balances if balances else defaultdict(int)
         self.txs = []
 
         caller_module = _infer_self(offset=1)
@@ -89,7 +106,7 @@ class Contract(object):
             setattr(caller_module, arg, value)
             _modify_frame_global(arg, value)
 
-    def run(self, tx, contract, block):
+    def run(self, tx, msg, contract, block):
         raise NotImplementedError("Should have implemented this")
 
     def load(self, script, tx, contract, block):
@@ -100,9 +117,9 @@ class Contract(object):
             log("Loading %s" % script)
 
             closure = """
-from sim import Block, Contract, Simulation, Tx, log, mktx, stop, array
+from sim import Block, Contract, Simulation, Tx, Msg, log, stop, suicide, array, stopret, mkmsg, send
 class HLL(Contract):
-    def run(self, tx, contract, block):
+    def run(self, tx, msg, contract, block):
 """
             baseindent = "        "
 
@@ -154,6 +171,15 @@ class HLL(Contract):
             # Exponents
             closure = closure.replace("^", "**")
 
+            # Hex
+            closure = closure.replace("hex(", "str(")
+
+            # Return
+            closure = closure.replace("return(", "stopret(")
+
+            # msg
+            closure = closure.replace("msg(", "mkmsg(")
+
             # Comments
             closure = closure.replace("//", "#")
 
@@ -172,7 +198,9 @@ class HLL(Contract):
             exec(closure, closure_module.__dict__)
 
         h = closure_module.HLL()
-        h.run(tx, contract, block)
+        msg = Msg(tx)
+        h.run(tx, msg, contract, block)
+
 
 class Simulation(object):
 
@@ -197,8 +225,9 @@ class Simulation(object):
         if method_name is None:
             method_name = inspect.stack()[1][3]
 
-        logging.info("RUN %s: %s" % (method_name, tx))
+        logging.info("RUN %s: %s" % (method_name.replace('_', ' ').capitalize(), tx))
 
+        msg = Msg(tx)
         contract.txs = []
 
         try:
@@ -210,7 +239,26 @@ class Simulation(object):
             else:
                 logging.info("Stopped")
                 self.stopped = True
+
+        gas = Gas()
+        totalgas = gas.calculate_gas(contract)
+        logging.debug("Fees: %d" % totalgas['total'])
+        endowment = contract.balance[contract.address]
+        addendowment = tx.value - totalgas['total']
+        if addendowment > 0:
+            logging.info("Adding %d to endowment" % addendowment)
+            endowment += addendowment
+            contract.balance[contract.address] = endowment
+            logging.info("New endowment: %d" % endowment)
+        else:
+            logging.info("Current endowment: %d" % endowment)
+        # contract.balance[tx.sender] -= endowment
+
         logging.info('-' * 20)
+        logging.info(contract.storage)
+        logging.info('-' * 20)
+        logging.info(contract.balance)
+        logging.info('=' * 20)
 
 
 class Storage(object):
@@ -219,11 +267,15 @@ class Storage(object):
         self._storage = defaultdict(int)
 
     def __getitem__(self, key):
+        if isinstance(key,(str,unicode)):
+            key = int(key.encode('hex'), 16)
         if _is_called_by_contract():
             logging.debug("Accessing storage '%s'" % key)
         return self._storage[key]
 
     def __setitem__(self, key, value):
+        if isinstance(key,(str,unicode)):
+            key = int(key.encode('hex'), 16)
         if _is_called_by_contract():
             logging.debug("Setting storage '%s' to '%s'" % (key, value))
         self._storage[key] = value
@@ -234,12 +286,110 @@ class Storage(object):
 
 class Tx(object):
 
-    def __init__(self, sender=None, value=0, fee=0, data=[]):
+    def __init__(self, sender=None, value=0, fee=1 * 10 ** 15, gas=0, gasprice=0, data=[]):
         self.sender = sender
         self.value = value
         self.fee = fee
+        self.gasprice = gasprice if gasprice else MINGASPRICE
+        self.gas = gas if gas else self.fee / self.gasprice
+        gasfee = self.gas * self.gasprice
+        if gasfee > self.fee:
+            self.fee = gasfee
         self.data = data
         self.datan = len(data)
 
+        contract = _is_called_by_contract()
+        if contract:
+            gas = Gas()
+            totalgas = gas.calculate_gas(contract)
+            freeload = value + totalgas
+            self.contract.balance[self.contract.address] += freeload
+            logging.debug("Freeloading %s with %d" % (sender, freeload))
+
     def __repr__(self):
-        return '<tx sender=%s value=%d fee=%d data=%s datan=%d>' % (self.sender, self.value, self.fee, self.data, self.datan)
+        return '<tx sender=%s value=%d fee=%d gas=%d gasprice=%d data=%s datan=%d>' % (self.sender, self.value, self.fee, self.gas, self.gasprice, self.data, self.datan)
+
+
+class Msg(object):
+
+    def __init__(self, tx):
+        self.datasize = tx.datan
+        self.sender = tx.sender
+        self.value = tx.value
+        self.data = tx.data
+
+    def __getitem__(self):
+        return self
+
+
+class Balance(object):
+
+    def __init__(self):
+        self._balance = defaultdict(int)
+
+    def __getitem__(self, address):
+        balance = self._balance[address]
+        if _is_called_by_contract():
+            logging.debug("Accessing balance '%s' of '%s'" % (balance, address))
+        return balance
+
+    def __setitem__(self, address, value):
+        # if _is_called_by_contract():
+        #     logging.debug("Cannot set balance of '%s' to '%s'" % (address, value))
+        # else:
+        logging.debug("Setting balance of '%s' to '%s'" % (address, value))
+        self._balance[address] = value
+
+    def __repr__(self):
+        return "<balance %s>" % repr(self._balance)
+
+class Gas(object):
+
+    def __init__(self):
+        self._gas = 0
+        self.gas = 100
+        self.gasprice = MINGASPRICE
+        self.pricestep = 1 # opcode count
+        self.pricedata = 20 # storage load access
+        self.pricestorage = 100 # storage store access
+        self.pricememory = 1 # opcode count
+        self.pricetx = 100 # tx fee
+        self.pricebasecontract = 100 # new contract feww
+        self.pricetxdata = 1 # opcode count
+
+        # tx fee + newcontractfee (opt) + stepfee (count opcode steps) + datafee (storage access) + ...
+
+        # quick ref from c++
+        # u256 const eth::c_stepGas = 1;
+        # u256 const eth::c_balanceGas = 20;
+        # u256 const eth::c_sha3Gas = 20;
+        # u256 const eth::c_sloadGas = 20;
+        # u256 const eth::c_sstoreGas = 100;
+        # u256 const eth::c_createGas = 100;
+        # u256 const eth::c_callGas = 20;
+        # u256 const eth::c_memoryGas = 1;
+        # u256 const eth::c_txDataGas = 5;
+
+
+    def calculate_gas(self, contract):
+
+        # if 'traceback' in self.results['es']:
+        #     return
+
+        gas = { 'tx': self.gasprice * self.pricetx, 'step': 0, 'storage': 0 }
+
+        # step gas
+        # comp_steps = [e for e in self.results['es']['code'] if isinstance(e,str)]
+        # fees['step'] = len(comp_steps[16:])
+
+
+        # storage fees
+        code_lines = contract.closure.split('\n')
+        for i, line in enumerate(code_lines):
+            if line.startswith('contract.storage['): # TODO: use regex?
+                fees['storage'] += self.pricestorage
+
+        # add up gas for total
+        gas['total'] = sum(gas.values())
+
+        return gas
